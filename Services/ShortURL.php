@@ -23,6 +23,7 @@
 
 require_once 'Net/URL2.php';
 require_once 'Services/ShortURL/Exception.php';
+require_once 'Services/ShortURL/Exception/UnknownService.php';
 
 /**
  * An interface for managing short URLs
@@ -60,7 +61,8 @@ abstract class Services_ShortURL
         'tinyurl.com' => 'TinyURL',
         'digg.com'    => 'Digg',
         'tr.im'       => 'Trim',
-        'short.ie'    => 'Shortie'
+        'short.ie'    => 'Shortie',
+        'su.pr'       => 'Supr'
     );
 
     /**
