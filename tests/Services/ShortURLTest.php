@@ -63,6 +63,10 @@ class Services_ShortURLTest extends PHPUnit_Framework_TestCase
         ),
         'Digg'    => array(
             'appkey' => 'http://pear.php.net/package/Services_ShortURL/@version@'
+        ),
+        'Supr'   => array(
+            'login'  => 'servicesshorturl',
+            'apiKey' => 'a5d21255564bd68437b39159d6de6a1b'
         )
     );
 
@@ -93,7 +97,8 @@ class Services_ShortURLTest extends PHPUnit_Framework_TestCase
         // Create a short URL and do some sanity checking
         $small = $api->shorten($this->testURL);
         $this->assertType('string', $small);
-        $this->assertTrue(Validate::uri($small), 'Invalid URL: ' . $small);
+        $validate = new Validate();
+        $this->assertTrue($validate->uri($small), 'Invalid URL: ' . $small);
 
         // Expand the short URL and do some sanity checking
         $big = $api->expand($small);
@@ -158,7 +163,8 @@ class Services_ShortURLTest extends PHPUnit_Framework_TestCase
             array('Trim'),
             array('Shortie'),
             array('Bitly'),
-            array('Digg')
+            array('Digg'),
+            array('Supr')
         );
     }
 
@@ -175,7 +181,8 @@ class Services_ShortURLTest extends PHPUnit_Framework_TestCase
             array('http://is.gd/uaPi', 'Isgd'),
             array('http://tr.im/jCBG', 'Trim'),
             array('http://bit.ly/10qgu', 'Bitly'),
-            array('http://digg.com/d1kAa1', 'Digg')
+            array('http://digg.com/d1kAa1', 'Digg'),
+            array('http://su.pr/2v4Dff', 'Supr')
         );
     }
 }
