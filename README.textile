@@ -14,6 +14,7 @@ h3. Services
 * Digg
 * is.gd
 * short.ie
+* su.pr
 * TinyURL
 * tr.im
 
@@ -70,6 +71,37 @@ $urls = Services_ShortURL::extract($txt);
 
 // Will be a hash with short => long URls in it.
 print_r($urls);
+
+?>
+</code>
+</pre>
+
+h3. Posting and scheduling messages
+
+You can post short messages to services such as Twitter and Facebook using the post and schedule methods.
+
+<pre>
+<code>
+<?php
+
+$msg = 'Hi Mom! http://www.imdb.com/name/nm0000571/';
+require_once 'Services/ShortURL.php';
+
+$api  = Services_ShortURL::factory('Supr');
+$shortmsg = $api->post($url);
+
+// Should be "Hi Mom! http://su.pr/2oKPAf"
+var_dump($shortmsg);
+
+$msg = 'Hi Mom! http://www.imdb.com/name/nm0000571/';
+require_once 'Services/ShortURL.php';
+
+$api  = Services_ShortURL::factory('Supr');
+$when = time() + (24*60*60); // now + 24h
+$shortmsg = $api->schedule($url, $when);
+
+// Should be "Hi Mom! http://su.pr/2oKPAf"
+var_dump($shortmsg);
 
 ?>
 </code>
