@@ -182,7 +182,7 @@ class Services_ShortURLTest extends PHPUnit_Framework_TestCase
             array('http://tr.im/jCBG', 'Trim'),
             array('http://bit.ly/10qgu', 'Bitly'),
             array('http://digg.com/d1kAa1', 'Digg'),
-            array('http://su.pr/2v4Dff', 'Supr')
+            array('http://su.pr/1Lt05u', 'Supr')
         );
     }
 }
