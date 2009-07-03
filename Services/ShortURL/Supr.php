@@ -92,6 +92,7 @@ implements Services_ShortURL_Interface
     {
         $params = array(
             'format'  => 'xml',
+            'version' => '1.0',
             'longUrl' => $url,
             'login'   => $this->options['login'],
             'apiKey'  => $this->options['apiKey']        
@@ -103,123 +104,8 @@ implements Services_ShortURL_Interface
         }
 
         $url = $this->api . '/shorten?' . implode('&', $sets);
-        $xml = $this->sendRequest($url);
-        return (string)$xml->results->nodeKeyVal->shortUrl;
-    }
+        $result = $this->sendRequest($url);
 
-    /**
-     * Expand a URL using {@link http://su.pr}
-     *
-     * @param string $url The URL to expand
-     *
-     * @throws {@link Services_ShortURL_Exception_CouldNotExpand}
-     * @return string The expanded URL
-     * @see Services_ShortURL_Supr::sendRequest()
-     */
-    public function expand($url)
-    {
-        $params = array(
-            'format'   => 'xml',
-            'shortUrl' => $url,
-            'login'    => $this->options['login'],
-            'apiKey'   => $this->options['apiKey']        
-        );
-
-        $sets = array();
-        foreach ($params as $key => $val) {
-            $sets[] = $key . '=' . $val;
-        }
-
-        $url = $this->api . '/expand?' . implode('&', $sets);
-        $xml = $this->sendRequest($url);
-        return (string)$xml->results->nodeKeyVal->longUrl;
-    }
-
-    /**
-     * Post a message using {@link http://su.pr}
-     *
-     * @param string $msg The message to post (URLs will be shortened)
-     *
-     * @throws {@link Services_ShortURL_Exception_CouldNotPost}
-     * @return string The message including shortened URLs (if present)
-     * @see Services_ShortURL_Supr::sendRequest()
-     */
-		public function post($msg)
-		{
-			$params = array(
-				'format'   => 'xml',
-				'services' => array(),
-				'login'    => $this->options['login'],
-				'apiKey'   => $this->options['apiKey']
-			);
-
-			$sets = array();
-			foreach ($params as $key => $val) {
-				if (is_array($val)) {
-					foreach ($val as $mval) {
-						$sets[] = $key . '=' . $mval;
-					}
-				} else {
-					$sets[] = $key . '=' . $val;
-				}
-			}
-
-			$url = $this->api . '/post?' . implode('&', $sets);
-			$xml = $this->sendRequest($url);
-			return (string)$xml->results->nodeKeyVal->shortMsg;
-		}
-
-    /**
-     * Schedule a message using {@link http://su.pr}
-     *
-     * @param string $msg The message to post (URLs will be shortened)
-     * @param string $time The time to post the message
-     *
-     * @throws {@link Services_ShortURL_Exception_CouldNotSchedule}
-     * @return string The message including shortened URLs (if present)
-     * @see Services_ShortURL_Supr::sendRequest()
-     */
-		public function schedule($msg, $time)
-		{
-			$params = array(
-				'format'    => 'xml',
-				'services'  => array(),
-				'timestamp' => $time,
-				'login'     => $this->options['login'],
-				'apiKey'    => $this->options['apiKey']
-			);
-
-			$sets = array();
-			foreach ($params as $key => $val) {
-				if (is_array($val)) {
-					foreach ($val as $mval) {
-						$sets[] = $key . '=' . $mval;
-					}
-				} else {
-					$sets[] = $key . '=' . $val;
-				}
-			}
-
-			$url = $this->api . '/schedule?' . implode('&', $sets);
-			$xml = $this->sendRequest($url);
-			return (string)$xml->results->nodeKeyVal->shortMsg;
-
-		}
-
-    /**
-     * Send a request to {@link http://su.pr}
-     *
-     * @param string $url The URL to send the request to
-     *
-     * @throws {@link Services_ShortURL_Exception_CouldNotShorten}
-     * @return object Instance of SimpleXMLElement
-     */
-    protected function sendRequest($url)
-    {
-        $this->req->setUrl($url);
-        $this->req->setMethod('GET');
-
-        $result = $this->req->send(); 
         if ($result->getStatus() != 200) {
             throw new Services_ShortURL_Exception_CouldNotShorten(
                 'Non-300 code returned', $result->getStatus()
@@ -239,8 +125,188 @@ implements Services_ShortURL_Interface
             );
         }
 
-        return $xml;
+        return (string)$xml->results->nodeKeyVal->shortUrl;
     }
+
+    /**
+     * Expand a URL using {@link http://su.pr}
+     *
+     * @param string $url The URL to expand
+     *
+     * @throws {@link Services_ShortURL_Exception_CouldNotExpand}
+     * @return string The expanded URL
+     * @see Services_ShortURL_Supr::sendRequest()
+     */
+    public function expand($url)
+    {
+        $params = array(
+            'format'   => 'xml',
+            'version' => '1.0',
+            'shortUrl' => $url,
+            'login'    => $this->options['login'],
+            'apiKey'   => $this->options['apiKey']        
+        );
+
+        $sets = array();
+        foreach ($params as $key => $val) {
+            $sets[] = $key . '=' . $val;
+        }
+
+        $url = $this->api . '/expand?' . implode('&', $sets);
+        $result = $this->sendRequest($url);
+
+        if ($result->getStatus() != 200) {
+            throw new Services_ShortURL_Exception_CouldNotExpand(
+                'Non-300 code returned', $result->getStatus()
+            );
+        }
+
+        $xml = @simplexml_load_string($result->getBody());
+        if (!$xml instanceof SimpleXMLElement) {
+            throw new Services_ShortURL_Exception_CouldNotExpand(
+                'Could not parse API response'
+            );
+        }
+
+        if ((int)$xml->errorCode > 0) {
+            throw new Services_ShortURL_Exception_CouldNotExpand(
+                (string)$xml->errorMessage, (int)$xml->errorCode
+            );
+        }
+
+        return (string)$xml->results->nodeKeyVal->longUrl;
+    }
+
+    /**
+     * Post a message using {@link http://su.pr}
+     *
+     * @param string $msg The message to post (URLs will be shortened)
+     *
+     * @throws {@link Services_ShortURL_Exception_CouldNotPost}
+     * @return string The message including shortened URLs (if present)
+     * @see Services_ShortURL_Supr::sendRequest()
+     */
+		public function post($msg)
+		{
+			$params = array(
+				'format'   => 'xml',
+				'version'  => '1.0',
+				'services' => array(),
+				'login'    => $this->options['login'],
+				'apiKey'   => $this->options['apiKey']
+			);
+
+			$sets = array();
+			foreach ($params as $key => $val) {
+				if (is_array($val)) {
+					foreach ($val as $mval) {
+						$sets[] = $key . '=' . $mval;
+					}
+				} else {
+					$sets[] = $key . '=' . $val;
+				}
+			}
+
+			$url = $this->api . '/post?' . implode('&', $sets);
+			$result = $this->sendRequest($url);
+
+			if ($result->getStatus() != 200) {
+				throw new Services_ShortURL_Exception_CouldNotPost(
+					'Non-300 code returned', $result->getStatus()
+				);
+			}
+
+			$xml = @simplexml_load_string($result->getBody());
+			if (!$xml instanceof SimpleXMLElement) {
+				throw new Services_ShortURL_Exception_CouldNotPost(
+					'Could not parse API response'
+				);
+			}
+
+			if ((int)$xml->errorCode > 0) {
+				throw new Services_ShortURL_Exception_CouldNotPost(
+					(string)$xml->errorMessage, (int)$xml->errorCode
+				);
+			}
+
+			return (string)$xml->results->nodeKeyVal->shortMsg;
+		}
+
+    /**
+     * Schedule a message using {@link http://su.pr}
+     *
+     * @param string $msg The message to post (URLs will be shortened)
+     * @param string $time The time to post the message
+     *
+     * @throws {@link Services_ShortURL_Exception_CouldNotSchedule}
+     * @return string The message including shortened URLs (if present)
+     * @see Services_ShortURL_Supr::sendRequest()
+     */
+		public function schedule($msg, $time)
+		{
+			$params = array(
+				'format'    => 'xml',
+				'version'   => '1.0',
+				'services'  => array(),
+				'timestamp' => $time,
+				'login'     => $this->options['login'],
+				'apiKey'    => $this->options['apiKey']
+			);
+
+			$sets = array();
+			foreach ($params as $key => $val) {
+				if (is_array($val)) {
+					foreach ($val as $mval) {
+						$sets[] = $key . '=' . $mval;
+					}
+				} else {
+					$sets[] = $key . '=' . $val;
+				}
+			}
+
+			$url = $this->api . '/schedule?' . implode('&', $sets);
+			$result = $this->sendRequest($url);
+
+			if ($result->getStatus() != 200) {
+				throw new Services_ShortURL_Exception_CouldNotSchedule(
+					'Non-300 code returned', $result->getStatus()
+				);
+			}
+
+			$xml = @simplexml_load_string($result->getBody());
+			if (!$xml instanceof SimpleXMLElement) {
+				throw new Services_ShortURL_Exception_CouldNotSchedule(
+					'Could not parse API response'
+				);
+			}
+
+			if ((int)$xml->errorCode > 0) {
+				throw new Services_ShortURL_Exception_CouldNotSchedule(
+					(string)$xml->errorMessage, (int)$xml->errorCode
+				);
+			}
+
+			return (string)$xml->results->nodeKeyVal->shortMsg;
+
+		}
+
+    /**
+     * Send a request to {@link http://su.pr}
+     *
+     * @param string $url The URL to send the request to
+     *
+     * @throws {@link Services_ShortURL_Exception_CouldNotShorten}
+     * @return object Instance of SimpleXMLElement
+     */
+    protected function sendRequest($url)
+    {
+        $this->req->setUrl($url);
+        $this->req->setMethod('GET');
+
+        $result = $this->req->send(); 
+
+				return $result;
+		}
 }
 
 ?>
